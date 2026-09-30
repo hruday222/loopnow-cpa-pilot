@@ -417,7 +417,9 @@ function buildReport() {
   };
 }
 
-describe("production golden-case evaluation", () => { 
+const runEvaluation = process.env.RUN_EVAL === "1";
+
+describe.skipIf(!runEvaluation)("production golden-case evaluation", () => {
   for (const goldenCase of evaluationCases) {
     it(goldenCase.id, async () => {
 

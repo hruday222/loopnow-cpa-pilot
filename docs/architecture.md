@@ -1,106 +1,89 @@
 # Loopnow CPA Copilot — Architecture
 
-## Runtime flow
+## Architecture Principles
 
-```text
-Browser selectedReceiptId
-        |
-        v
-POST /api/process
-        |
-        v
-Agent Run (runId + receiptId)
-        |
-        +--> AI SDK / OpenRouter
-        |       |
-        |       +--> strict tools
-        |               |
-        |               +--> deterministic CRA rules
-        |               +--> controlled GIFI catalogue
-        |               +--> persisted receipt state
-        |
-        v
-Deterministic verification
-        |
-        +--> review
-        |
-        +--> authorized/idempotent mutation
-        |
-        v
-SQLite persistence + audit event
-        |
-        v
-SSE stream -> dashboard
+1. The LLM is a reasoning/proposal layer, not the source of truth for tax arithmetic.
+2. Business rules are deterministic, versioned, and testable.
+3. Tool contracts are strict and schema-validated.
+4. Financial mutations are backend-authorized, transactional, and idempotent.
+5. UI state, agent state, and persisted domain state have explicit ownership.
+6. Technical failure and business review are separate states.
+7. Tool execution and meaningful state transitions are observable and auditable.
+
+## Runtime Flow
+
+```mermaid
+flowchart TD
+    UI["Dashboard<br/>selectedReceiptId"] --> API["POST /api/process"]
+    API --> RUN["Agent Run<br/>runId + receiptId"]
+    RUN --> MODEL["AI SDK model"]
+    MODEL --> TOOLS["Strict typed tools"]
+    TOOLS --> CRA["Deterministic CRA rules"]
+    TOOLS --> GST["GST/HST format validation"]
+    TOOLS --> ITC["Deterministic ITC engine"]
+    TOOLS --> CLASSIFY["Expense classification"]
+    TOOLS --> GIFI["Controlled GIFI catalogue"]
+    TOOLS --> REVIEW["Human review"]
+    CRA --> VERIFY["Deterministic verification"]
+    GST --> VERIFY
+    ITC --> VERIFY
+    CLASSIFY --> VERIFY
+    GIFI --> VERIFY
+    VERIFY --> MUTATE["Authorized/idempotent mutation"]
+    VERIFY --> REVIEW
+    MUTATE --> DB["SQLite persistence"]
+    REVIEW --> DB
+    RUN --> AUDIT["Audit + tool-call persistence"]
+    MUTATE --> AUDIT
+    DB --> SSE["SSE stream"]
+    AUDIT --> SSE
+    SSE --> UI
 ```
 
-## State ownership
+## State Ownership
 
-- **UI-owned:** selected receipt, textarea, local display state.
-- **Agent-owned:** run ID, stage, tool lifecycle and analysis while a run executes.
-- **Persisted domain state:** receipts, classifications, analyses, approvals, agent runs, tool calls and audit events.
-- No request path relies on a module-level mutable selected receipt.
+**UI-owned:** selected receipt, message input, transient presentation state, streaming text/tool presentation, retry/error presentation.
 
-## Mutation boundary
+**Agent-owned:** run ID, current stage, tool lifecycle, intermediate analysis, final verification result.
 
-Financial classification follows:
+**Persisted:** receipts, classification, analysis, approvals, agent runs, tool calls, audit events, idempotency keys.
 
-1. LLM proposal
-2. Zod tool validation
-3. run/receipt authorization
-4. deterministic business-rule verification
-5. idempotency key
-6. SQLite transaction
-7. audit event
+## Tool Permissions
 
-The LLM never supplies authoritative financial arithmetic.
+The model receives a narrow allowlist of domain tools. There is no generic shell, code execution, filesystem, unrestricted HTTP, or generic database mutation tool.
 
-## Review semantics
+## Deterministic Authority Boundary
 
-`REVIEW` means the system executed normally but business evidence is missing,
-ambiguous or insufficient. `ERROR` means a technical/system failure.
+The backend owns documentation thresholds, GST/HST format validation, ITC arithmetic, meal limitations, GIFI validation, transaction-type consistency, review requirements, mutation authorization, idempotency, persistence, and audit events.
 
-Receipt #003 is intentionally a review scenario because its GST/HST number and
-higher-tier documentation evidence are missing.
+## Financial Mutation Flow
+
+```text
+LLM proposal → Zod validation → run/receipt scope → deterministic verification → idempotency key → SQLite transaction → audit event
+```
+
+## Review Semantics
+
+`REVIEW` means the workflow completed but evidence or a high-impact decision requires human attention. `ERROR` means a technical/system failure.
+
+Receipt #003 is intentionally a review case because its documentation/GST evidence is insufficient.
 
 ## Persistence
 
-SQLite is used for the assessment prototype because Node 22 provides the
-embedded relational database through `node:sqlite`. The schema is deliberately
-small and can be migrated to PostgreSQL without changing the domain rules.
+SQLite is used for the assessment prototype. Persisted entities are receipts, agent runs, tool calls, audit events, approvals, and idempotency keys. PostgreSQL is the intended production scaling target.
 
-Tables:
+## Model Abstraction
 
-- receipts
-- agent_runs
-- tool_calls
-- audit_events
-- approvals
-- idempotency_keys
+Configured through `MODEL_PROVIDER` and `MODEL_NAME`. The verified path uses `gemini` / `gemini-3.1-flash-lite`; the code also contains provider adapters for Groq and OpenRouter.
 
-## Deterministic rule boundary
+## Streaming
 
-The LLM proposes classifications and explanations. The backend owns:
+The processing endpoint emits token/explanation progress, tool lifecycle, state updates, final result, and error events over SSE.
 
-- documentation tiers
-- GST/HST format validation
-- ITC arithmetic
-- meal limitations
-- GIFI catalogue validation
-- transaction-type consistency
-- mutation authorization
-- persistence
-- audit records
+## Security Boundary
 
-## Security model
+Receipt/vendor text is untrusted. Controls include strict schemas, tool allowlisting, receipt/run scoping, deterministic backend authority, idempotency, human review, server-side credentials, and safe client-facing errors.
 
-Receipt text is untrusted. The model is instructed not to execute instructions
-embedded in receipt content. Tool access is allowlisted and scoped to the run's
-selected receipt. No generic shell or arbitrary code execution tool exists.
+## Known Limitations
 
-## Known limitations
-
-- Authentication/tenant isolation is not implemented in this assessment prototype.
-- GST/HST account validation is format validation only; it does not verify CRA registration externally.
-- SQLite is suitable for the demo but PostgreSQL is the production scaling target.
-- Model provider abstraction is configuration-level; the current installed provider is OpenRouter.
-- Approval editing is intentionally minimal.
+Authentication/tenant isolation, distributed rate limiting, stronger PII controls, managed PostgreSQL, OpenTelemetry tracing, and richer approval UX remain production work.

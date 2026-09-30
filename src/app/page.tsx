@@ -553,7 +553,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1500px] grid-cols-[250px_minmax(0,1fr)_390px] gap-4 p-4">
+      <div className="mx-auto grid max-w-[1500px] grid-cols-1 gap-4 p-4 lg:grid-cols-[250px_minmax(0,1fr)_390px]">
         <aside className="rounded-xl border border-zinc-800 bg-[#0d0d10]">
           <div className="border-b border-zinc-800 px-4 py-3">
             <div className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -578,9 +578,8 @@ export default function Home() {
                     setTools([]);
                     setError("");
                   }}
-                  className={`mb-1 w-full rounded-lg px-3 py-3 text-left transition ${
-                    receipt.id ===
-                    selectedId
+                  className={`mb-1 w-full rounded-lg px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
+                    receipt.id === selectedId
                       ? "bg-zinc-800"
                       : "hover:bg-zinc-900"
                   }`}
@@ -654,7 +653,7 @@ export default function Home() {
                   </span>
                 </div>
 
-                <div className="mt-6 grid grid-cols-4 gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
                   {[
                     [
                       "Subtotal",
@@ -869,7 +868,7 @@ export default function Home() {
                   Current stage
                 </div>
 
-                <div className="mt-1 text-sm font-medium">
+                <div className="mt-1 text-sm font-medium" aria-live="polite" aria-atomic="true">
                   {stageLabel[
                     stage
                   ] ??
@@ -879,8 +878,16 @@ export default function Home() {
                     ]}
                 </div>
               </div>
+              
+              <label
+                htmlFor="agent-message"
+                className="sr-only"
+              >
+                Message the CPA assistant
+              </label>
 
               <textarea
+                id="agent-message"
                 value={message}
                 onChange={(event) =>
                   setMessage(
@@ -899,7 +906,7 @@ export default function Home() {
                   running ||
                   !selected
                 }
-                className="mt-3 w-full rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-3 w-full rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d10] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {running
                   ? "Processing…"
@@ -907,7 +914,7 @@ export default function Home() {
               </button>
 
               {error && (
-                <div className="mt-3 rounded-lg border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300">
+                <div className="mt-3 rounded-lg border border-red-900/60 bg-red-950/20 p-3 text-xs text-red-300" role="alert" aria-live="assertive">
                   {error}
                 </div>
               )}
@@ -1029,7 +1036,7 @@ export default function Home() {
                               "approve",
                             )
                           }
-                          className="rounded-md bg-emerald-500/15 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/25"
+                          className="rounded-md bg-emerald-500/15 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                         >
                           Approve
                         </button>
@@ -1041,7 +1048,7 @@ export default function Home() {
                               "reject",
                             )
                           }
-                          className="rounded-md bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/20"
+                          className="rounded-md bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                         >
                           Reject
                         </button>

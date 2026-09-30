@@ -1,0 +1,1 @@
+export type TransactionType = "expense" | "cash_deposit";

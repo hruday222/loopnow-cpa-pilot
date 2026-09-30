@@ -1,0 +1,38 @@
+{
+  "name": "ai-agent-assessment",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:watch": "vitest",
+    "eval": "vitest run evaluation/run-evaluation.test.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.85",
+    "@ai-sdk/groq": "^4.0.50",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "ai": "^7.0.111",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.0.1"
+  },
+  "packageManager": "pnpm@12.5.1"
+}

@@ -1,8 +1,11 @@
 import { loadEnvFile } from "node:process";
-
-loadEnvFile(".env.local");
-
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+const runEvaluation = process.env.RUN_EVAL === "1";
+
+if (runEvaluation) {
+  loadEnvFile(".env.local");
+}
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -417,7 +420,6 @@ function buildReport() {
   };
 }
 
-const runEvaluation = process.env.RUN_EVAL === "1";
 
 describe.skipIf(!runEvaluation)("production golden-case evaluation", () => {
   for (const goldenCase of evaluationCases) {
